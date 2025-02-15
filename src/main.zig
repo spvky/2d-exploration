@@ -1,24 +1,61 @@
 const std = @import("std");
+const rl = @import("raylib");
 
 pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+    const screen_width: u32 = 160;
+    const screen_height: u32 = 90;
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
+    rl.setConfigFlags(.{ .window_resizable = true });
+    rl.initWindow(screen_width, screen_height, "Float");
+    defer rl.closeWindow();
 
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
+    const player = Player.new();
 
-    try bw.flush(); // don't forget to flush!
+    // Game Loop
+    while (!rl.windowShouldClose()) {
+        rl.beginDrawing();
+        defer rl.endDrawing();
+        rl.clearBackground(rl.Color.black);
+
+        player.draw();
+
+        rl.drawText("Boy Town", 20, 20, 40, rl.Color.green);
+    }
 }
 
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
-}
+const World = struct {
+    camera: ?*rl.Camera2D = null,
+    player: ?*Player = null,
+
+    const Self = @This();
+
+    pub fn init() Self {
+        return Self;
+    }
+};
+
+const Player = struct {
+    position: rl.Vector2,
+    velocity: rl.Vector2,
+
+    const Self = @This();
+
+    pub fn new() Self {
+        return Self{ .position = .{ .x = 0, .y = 0 }, .velocity = .{ .x = 0, .y = 0 } };
+    }
+
+    pub fn draw(self: Self) void {
+        rl.drawCircleV(self.position, 32, rl.Color.ray_white);
+    }
+};
+
+const Block = struct {
+    position: rl.Vector2,
+    extents: rl.Vector2,
+
+    const Self = @This();
+
+    pub fn draw(self: Self) void {
+        rl.drawRectangleV(self.position, self.extents, rl.Color.red);
+    }
+};
